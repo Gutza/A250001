@@ -3,9 +3,13 @@ var gui;
 
 function setup() {
   //createCanvas(displayWidth, displayHeight);
-  createCanvas(800, 800);
+  createCanvas(windowWidth, windowHeight);
+  //createCanvas(800, 800);
   gui = createGui('Circles!');
   gui.addGlobals('showCircles');
+}
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
 
 let circles = [];
