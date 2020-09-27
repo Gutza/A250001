@@ -15,20 +15,43 @@ class Circle {
 		this.oc = this.p.color(0, 0, 0);
 	}
 
-	draw = () => {
-		this.p.fill(this.p.color('rgba(0,0,0,0.1)'));
-		this.p.stroke(this.c);
-		this.p.circle(this.x, this.y, this.r * 2); // p5js uses the diameter
+	draw = gp => {
+		if (gp.ShowCircles) {
+			this.p.fill(this.p.color('rgba(0,0,0,0.1)'));
+			this.p.stroke(this.c);
+			this.p.strokeWeight(1);
+			this.p.circle(this.x, this.y, this.r * 2); // p5js uses the diameter
+		}
 		
-		this.p.fill(this.p.color(255, 255, 255));
-		this.p.stroke(this.oc);
-		this.intersections.forEach(i => {
-			if (this.index < i) {
-				return;
+		if (gp.ShowIntersections || gp.ShowRadicalLines) {
+			this.p.fill(this.p.color(255, 255, 255));
+			for (let iIndex in this.intersections) {
+				let i = this.intersections[iIndex];
+				let i1 = this.index;
+				let i2 = iIndex;
+				if (i1 < i2) {
+					return;
+				}
+				
+				if (gp.ShowRadicalLines) {
+					this.p.stroke(this.p.color(255, 255, 255));
+					this.p.strokeWeight(4);
+					this.p.line(i.int1.x, i.int1.y, i.int2.x, i.int2.y);
+					
+					this.p.stroke(this.p.color((i1*83+i2*77)%256, (i1*39+i2*11)%256, (i1*41+i2*13)%256));
+					this.p.strokeWeight(2);
+					this.p.line(i.int1.x, i.int1.y, i.int2.x, i.int2.y);
+				}
+				
+				if (gp.ShowIntersections) {
+					this.p.strokeWeight(1);
+					this.p.stroke(this.oc);
+					this.p.circle(i.int1.x, i.int1.y, 5);
+					this.p.circle(i.int2.x, i.int2.y, 5);
+					//console.log("i1", i1, "i2", i2);
+				}
 			}
-			this.p.circle(i.int1.x, i.int1.y, 5);
-			this.p.circle(i.int2.x, i.int2.y, 5);
-		});
+		}
 	}
 
 	// http://csharphelper.com/blog/2014/09/determine-where-two-circles-intersect-in-c/
@@ -86,6 +109,8 @@ class Circle {
 const s = (sketch) => {
 	var guiParams = {
 		ShowCircles: true,
+		ShowIntersections: true,
+		ShowRadicalLines: true,
 	}
 	var gui;
 
@@ -104,7 +129,7 @@ const s = (sketch) => {
 	sketch.draw = () => {
 		sketch.background(220);
 		circles.forEach(c => {
-			c.draw();
+			c.draw(guiParams);
 		});
 	}
 
