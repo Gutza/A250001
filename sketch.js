@@ -84,17 +84,13 @@ class Circle {
 }
 
 const s = (sketch) => {
-	console.log("Sketch", sketch);
 	var guiParams = {
-		showCircles: true,
+		ShowCircles: true,
 	}
 	var gui;
 
 	sketch.setup = () => {
-		console.log(this);
-		//createCanvas(displayWidth, displayHeight);
 		sketch.createCanvas(sketch.windowWidth, sketch.windowHeight);
-		//createCanvas(800, 800);
 		gui = sketch.createGui(sketch, "Circle workbench");
 		gui.addObject(guiParams);
 	}
@@ -105,8 +101,6 @@ const s = (sketch) => {
 
 	let circles = [];
 
-
-	// both draw() and redraw() are reserved
 	sketch.draw = () => {
 		sketch.background(220);
 		circles.forEach(c => {
@@ -117,8 +111,14 @@ const s = (sketch) => {
 	let candidates = [];
 
 	// Only called when moved AND NOT mouse pressed
-	sketch.mouseMoved = () => {
+	sketch.mouseMoved = event => {
 		candidates = [];
+		if (!sketch.validMouseTarget(event)) {
+			circles.forEach(c => {
+				c.c = sketch.color(0, 0, 0);
+			});
+			return;
+		}
 		circles.forEach(c => {
 			if (sketch.dist(sketch.mouseX, sketch.mouseY, c.x, c.y) > c.r) {
 				c.c = sketch.color(0, 0, 0);
@@ -129,16 +129,27 @@ const s = (sketch) => {
 		});
 	}
 
-	let startX = 0;
-	let startY = 0;
+	let startX = -1;
+	let startY = -1;
 
-	sketch.mousePressed = () => {
+	sketch.mousePressed = event => {
+		if (!sketch.validMouseTarget(event)) {
+			startX = startY = -1;
+			return;
+		}
 		startX = sketch.mouseX;
 		startY = sketch.mouseY;
 	}
 
+	sketch.validMouseTarget = event => {
+		return event.target.className == "p5Canvas";
+	}
+
 	let hasDragged = false;
-	sketch.mouseDragged = () => {
+	sketch.mouseDragged = event => {
+		if (startX < 0) {
+			return;
+		}
 		clearTimeout(delayHandle);
 		hasDragged = true;
 		candidates.forEach(c => {
@@ -149,12 +160,9 @@ const s = (sketch) => {
 	}
 
 	sketch.mouseReleased = event => {
-		console.log(event.target.className);
-		if (event.target.className != "p5Canvas") {
-			hasDragged = false;
+		if (!sketch.validMouseTarget(event)) {
 			return;
 		}
-		console.log("processing click");
 		if (!sketch.fullscreen()) {
 			//sketch.fullscreen(true);
 		}
@@ -201,7 +209,6 @@ const s = (sketch) => {
 				if (r.rel == "disjunct") {
 					return;
 				}
-				//console.log(cThis.index, cThat.index, r);
 			});
 		});
 	}
