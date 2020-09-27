@@ -12,15 +12,20 @@ class Circle {
 		this.ox = x;
 		this.oy = y;
 		this.c = this.p.color(255, 0, 0);
-		}
+		this.oc = this.p.color(0, 0, 0);
+	}
 
-		draw = () => {
+	draw = () => {
 		this.p.fill(this.p.color('rgba(0,0,0,0.1)'));
 		this.p.stroke(this.c);
 		this.p.circle(this.x, this.y, this.r * 2); // p5js uses the diameter
 		
-		this.p.noFill();
+		this.p.fill(this.p.color(255, 255, 255));
+		this.p.stroke(this.oc);
 		this.intersections.forEach(i => {
+			if (this.index < i) {
+				return;
+			}
 			this.p.circle(i.int1.x, i.int1.y, 5);
 			this.p.circle(i.int2.x, i.int2.y, 5);
 		});
@@ -90,7 +95,7 @@ const s = (sketch) => {
 		//createCanvas(displayWidth, displayHeight);
 		sketch.createCanvas(sketch.windowWidth, sketch.windowHeight);
 		//createCanvas(800, 800);
-		gui = sketch.createGui(sketch);
+		gui = sketch.createGui(sketch, "Circle workbench");
 		gui.addObject(guiParams);
 	}
 	
@@ -133,29 +138,35 @@ const s = (sketch) => {
 	}
 
 	let hasDragged = false;
-
 	sketch.mouseDragged = () => {
+		clearTimeout(delayHandle);
+		hasDragged = true;
 		candidates.forEach(c => {
 			c.x = c.ox + sketch.mouseX - startX;
 			c.y = c.oy + sketch.mouseY - startY;
 		});
-		hasDragged = true;
 		sketch.refreshTable();
 	}
 
-	sketch.mouseReleased = () => {
+	sketch.mouseReleased = event => {
+		console.log(event.target.className);
+		if (event.target.className != "p5Canvas") {
+			hasDragged = false;
+			return;
+		}
+		console.log("processing click");
 		if (!sketch.fullscreen()) {
 			//sketch.fullscreen(true);
 		}
 
 		if (hasDragged) {
-		hasDragged = false;
-		candidates.forEach(c => {
-			c.ox = c.x;
-			c.oy = c.y;
-		});
+			hasDragged = false;
+			candidates.forEach(c => {
+				c.ox = c.x;
+				c.oy = c.y;
+			});
 		} else {
-		circles.push(new Circle(sketch, sketch.mouseX, sketch.mouseY));
+			circles.push(new Circle(sketch, sketch.mouseX, sketch.mouseY));
 		}
 
 		sketch.refreshTable();
@@ -169,7 +180,14 @@ const s = (sketch) => {
 		sketch.refreshTable();
 	}
 
+	this.delayHandle = null;
+
 	sketch.refreshTable = () => {
+		clearTimeout(this.delayHandle);
+		this.delayHandle = setTimeout(sketch._refreshTable, 20);
+	}
+	
+	sketch._refreshTable = () => {
 		circles.forEach(cThis => {
 			cThis.intersections = [];
 		});
@@ -183,7 +201,7 @@ const s = (sketch) => {
 				if (r.rel == "disjunct") {
 					return;
 				}
-				console.log(cThis.index, cThat.index, r);
+				//console.log(cThis.index, cThat.index, r);
 			});
 		});
 	}
