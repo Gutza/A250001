@@ -1,3 +1,12 @@
+/*
+Primary sources:
+- Intersection points between circles: http://csharphelper.com/blog/2014/09/determine-where-two-circles-intersect-in-c/
+- Computing regions: https://arxiv.org/pdf/1204.3569.pdf
+*/
+
+let radicalLines = {};
+let radicalIntersections = [];
+
 let globalIndex = 0;
 class Circle {
 	constructor(p, x, y) {
@@ -42,19 +51,17 @@ class Circle {
 					this.p.strokeWeight(2);
 					this.p.line(i.int1.x, i.int1.y, i.int2.x, i.int2.y);
 				}
-				
+								
 				if (gp.ShowIntersections) {
 					this.p.strokeWeight(1);
 					this.p.stroke(this.oc);
 					this.p.circle(i.int1.x, i.int1.y, 5);
 					this.p.circle(i.int2.x, i.int2.y, 5);
-					//console.log("i1", i1, "i2", i2);
 				}
 			}
 		}
 	}
 
-	// http://csharphelper.com/blog/2014/09/determine-where-two-circles-intersect-in-c/
 	relationTo = c => {
 		let centerDist = this.p.dist(this.x, this.y, c.x, c.y);
 		if (centerDist > this.r + c.r) {
@@ -102,6 +109,8 @@ class Circle {
 			int1: result.int1,
 			int2: result.int2,
 		};
+		radicalLines[this.index.toString()+"-"+c.index.toString()] = [[ result.int1.x, result.int1.y ], [ result.int2.x, result.int2.y]];
+
 		return result;
 	}
 }
@@ -109,8 +118,9 @@ class Circle {
 const s = (sketch) => {
 	var guiParams = {
 		ShowCircles: true,
-		ShowIntersections: true,
+		ShowIntersections: false,
 		ShowRadicalLines: true,
+		ShowRadicalIntersections: true,
 	}
 	var gui;
 
@@ -131,6 +141,11 @@ const s = (sketch) => {
 		circles.forEach(c => {
 			c.draw(guiParams);
 		});
+		if (guiParams.ShowRadicalIntersections) {
+			radicalIntersections.forEach(ri => {
+				sketch.circle(ri.x, ri.y, 5);
+			});
+		}
 	}
 
 	let candidates = [];
@@ -221,6 +236,7 @@ const s = (sketch) => {
 	}
 	
 	sketch._refreshTable = () => {
+		radicalLines = {};
 		circles.forEach(cThis => {
 			cThis.intersections = [];
 		});
@@ -236,6 +252,7 @@ const s = (sketch) => {
 				}
 			});
 		});
+		radicalIntersections = findIntersections(radicalLines);
 	}
 }
 
