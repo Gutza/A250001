@@ -34,9 +34,21 @@ class Circle {
 
 const s = (sketch) => {
 	let interestingPoints = {
-		ShowMidArcs: [],
-		ShowEndArcs: [],
-		ShowAvgRegions: [],
+		ShowMidArcs: {
+			color: "#F63",
+			size: 5,
+			points: []
+		},
+		ShowEndArcs: {
+			color: "#36F",
+			size: 5,
+			points: []
+		},
+		ShowAvgRegions: {
+			color: "#6F3",
+			size: 10,
+			points: []
+		},
 	};
 
 	var guiParams = {
@@ -66,7 +78,10 @@ const s = (sketch) => {
 		});
 		for (const key of Object.keys(interestingPoints)) {
 			if (guiParams[key]) {
-				interestingPoints[key].forEach(p=>{sketch.circle(p.x, p.y, 3)});
+				if (interestingPoints[key].color !== undefined) {
+					sketch.stroke(interestingPoints[key].color);
+				}
+				interestingPoints[key].points.forEach(p=>{sketch.circle(p.x, p.y, interestingPoints[key].size)});
 			}
 		}
 		//interestingPoints.forEach(p=>{sketch.circle(p.x, p.y, 3)});
@@ -165,9 +180,9 @@ const s = (sketch) => {
 	}
 	
 	sketch._refreshTable = () => {
-		interestingPoints.ShowMidArcs = [];
-		interestingPoints.ShowEndArcs = [];
-		interestingPoints.ShowAvgRegions = [];
+		interestingPoints.ShowMidArcs.points = [];
+		interestingPoints.ShowEndArcs.points = [];
+		interestingPoints.ShowAvgRegions.points = [];
 		let hhCircles = [];
 		circles.forEach(c => {
 			hhCircles.push({radius: c.r, x: c.x, y: c.y});
@@ -179,20 +194,20 @@ const s = (sketch) => {
 			}
 			let arcMidX = 0;
 			let arcMidY = 0;
-			let vertexCount = 0;
-			a.arcs.forEach(a=>{
-				interestingPoints.ShowMidArcs.push({x: a.mx, y: a.my});
-				interestingPoints.ShowEndArcs.push({x: a.start.x, y: a.start.y});
-				arcMidX += a.mx;
-				arcMidY += a.my;
-				vertexCount++;
+			let contourLength = 0;
+			
+			a.arcs.forEach(a => {
+				interestingPoints.ShowMidArcs.points.push({x: a.mx, y: a.my});
+				interestingPoints.ShowEndArcs.points.push({x: a.start.x, y: a.start.y});
+				arcMidX += a.mx * a.arcLength;
+				arcMidY += a.my * a.arcLength;
+				contourLength += a.arcLength;
 			});
-			interestingPoints.ShowAvgRegions.push({x: arcMidX/vertexCount, y: arcMidY/vertexCount});
+
+			interestingPoints.ShowAvgRegions.points.push({x: arcMidX/contourLength, y: arcMidY/contourLength});
 		});
-		console.log("hhResult", hhResult);
 		sketch.loop();
 	}
-	
 }
 
 let myp5 = new p5(s);
