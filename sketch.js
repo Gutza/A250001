@@ -33,8 +33,17 @@ class Circle {
 }
 
 const s = (sketch) => {
+	let interestingPoints = {
+		ShowMidArcs: [],
+		ShowEndArcs: [],
+		ShowAvgRegions: [],
+	};
+
 	var guiParams = {
 		ShowCircles: true,
+		ShowMidArcs: true,
+		ShowEndArcs: true,
+		ShowAvgRegions: true,
 	}
 	var gui;
 
@@ -55,7 +64,12 @@ const s = (sketch) => {
 		circles.forEach(c => {
 			c.draw(guiParams);
 		});
-		interestingPoints.forEach(p=>{sketch.circle(p.x, p.y, 3)});
+		for (const key of Object.keys(interestingPoints)) {
+			if (guiParams[key]) {
+				interestingPoints[key].forEach(p=>{sketch.circle(p.x, p.y, 3)});
+			}
+		}
+		//interestingPoints.forEach(p=>{sketch.circle(p.x, p.y, 3)});
 		
 		sketch.noLoop();
 	}
@@ -150,22 +164,30 @@ const s = (sketch) => {
 		this.delayHandle = setTimeout(sketch._refreshTable, 20);
 	}
 	
-	let interestingPoints = [];
 	sketch._refreshTable = () => {
-		interestingPoints = [];
+		interestingPoints.ShowMidArcs = [];
+		interestingPoints.ShowEndArcs = [];
+		interestingPoints.ShowAvgRegions = [];
 		let hhCircles = [];
 		circles.forEach(c => {
-			hhCircles.push(new circleRegions.circle({radius: c.r, x: c.x, y: c.y}, c.index));
+			hhCircles.push({radius: c.r, x: c.x, y: c.y});
 		});
 		let hhResult = circleRegions.getIntersectionAreas(hhCircles);
 		hhResult.areas.forEach(a => {
 			if (a.isCircle) {
 				return;
 			}
-			
+			let arcMidX = 0;
+			let arcMidY = 0;
+			let vertexCount = 0;
 			a.arcs.forEach(a=>{
-				interestingPoints.push({x: a.mx, y: a.my});
+				interestingPoints.ShowMidArcs.push({x: a.mx, y: a.my});
+				interestingPoints.ShowEndArcs.push({x: a.start.x, y: a.start.y});
+				arcMidX += a.mx;
+				arcMidY += a.my;
+				vertexCount++;
 			});
+			interestingPoints.ShowAvgRegions.push({x: arcMidX/vertexCount, y: arcMidY/vertexCount});
 		});
 		console.log("hhResult", hhResult);
 		sketch.loop();
