@@ -176,7 +176,7 @@ const s = (sketch) => {
 	sketch.refreshTable = () => {
 		sketch.loop();
 		clearTimeout(this.delayHandle);
-		this.delayHandle = setTimeout(sketch._refreshTable, 20);
+		this.delayHandle = setTimeout(sketch._refreshTable, 5);
 	}
 	
 	sketch._refreshTable = () => {
@@ -194,14 +194,13 @@ const s = (sketch) => {
 			}
 			let arcMidX = 0;
 			let arcMidY = 0;
-			let contourLength = 0;
+			let contourLength = a.perimeter;
 			
 			a.arcs.forEach(a => {
 				interestingPoints.ShowMidArcs.points.push({x: a.mx, y: a.my});
 				interestingPoints.ShowEndArcs.points.push({x: a.start.x, y: a.start.y});
 				arcMidX += a.mx * a.arcLength;
 				arcMidY += a.my * a.arcLength;
-				contourLength += a.arcLength;
 			});
 
 			interestingPoints.ShowAvgRegions.points.push({x: arcMidX/contourLength, y: arcMidY/contourLength});
