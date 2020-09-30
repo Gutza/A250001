@@ -56,6 +56,7 @@ const s = (sketch) => {
 		ShowMidArcs: true,
 		ShowEndArcs: true,
 		ShowAvgRegions: true,
+		LogRegions: false,
 	}
 	var gui;
 
@@ -185,7 +186,7 @@ const s = (sketch) => {
 		interestingPoints.ShowAvgRegions.points = [];
 		let hhCircles = [];
 		circles.forEach(c => {
-			hhCircles.push({radius: c.r, x: c.x, y: c.y});
+			hhCircles.push({radius: c.r, x: c.x, y: c.y, id: c.index});
 		});
 		let hhResult = circleRegions.getIntersectionAreas(hhCircles);
 		hhResult.areas.forEach(a => {
@@ -205,6 +206,9 @@ const s = (sketch) => {
 
 			interestingPoints.ShowAvgRegions.points.push({x: arcMidX/contourLength, y: arcMidY/contourLength});
 		});
+		if (guiParams.LogRegions) {
+			console.log("Regions", hhResult);
+		}
 		sketch.loop();
 	}
 }
