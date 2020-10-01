@@ -188,8 +188,8 @@ const s = (sketch) => {
 		circles.forEach(c => {
 			hhCircles.push({radius: c.r, x: c.x, y: c.y, id: c.index});
 		});
-		let hhResult = circleRegions.getIntersectionAreas(hhCircles);
-		hhResult.areas.forEach(a => {
+		let hhResult = circleRegions.getIntersectionRegions(hhCircles);
+		hhResult.regions.forEach(a => {
 			if (a.isCircle) {
 				return;
 			}
