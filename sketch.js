@@ -2,6 +2,7 @@
 Primary sources:
 - Intersection points between circles: http://csharphelper.com/blog/2014/09/determine-where-two-circles-intersect-in-c/
 - Computing regions: https://arxiv.org/pdf/1204.3569.pdf
+- Computing regions: https://hogg.io/writings/circle-intersections
 */
 
 let radicalLines = {};
@@ -74,19 +75,30 @@ const s = (sketch) => {
 
 	sketch.draw = () => {
 		sketch.background(220);
-		circles.forEach(c => {
-			c.draw(guiParams);
-		});
-		for (const key of Object.keys(interestingPoints)) {
-			if (guiParams[key]) {
-				if (interestingPoints[key].color !== undefined) {
-					sketch.stroke(interestingPoints[key].color);
+
+		if (this.hhResult !== undefined && this.hhResult.regions !== undefined) {
+			this.hhResult.regions.forEach(r=>{
+				if (r.radius !== undefined) {
+					sketch.ellipseMode(sketch.RADIUS);
+					sketch.circle(r.x, r.y, r.radius);
+				} else {
+					sketch.ellipseMode(sketch.RADIUS);
+					r.arcs.forEach(a => {
+						let sa = 0;
+						let ea = 0;
+						if(a.direction == 1) {
+							sa = a.a1;
+							ea = a.a2;
+						} else {
+							sa = a.a2;
+							ea = a.a1;
+						}
+						sketch.arc(a.x, a.y, a.radius, a.radius, sa, ea, sketch.OPEN);
+					});
 				}
-				interestingPoints[key].points.forEach(p=>{sketch.circle(p.x, p.y, interestingPoints[key].size)});
-			}
+			})
 		}
-		//interestingPoints.forEach(p=>{sketch.circle(p.x, p.y, 3)});
-		
+
 		sketch.noLoop();
 	}
 
@@ -180,6 +192,8 @@ const s = (sketch) => {
 		this.delayHandle = setTimeout(sketch._refreshTable, 5);
 	}
 	
+	this.hhResult = {};
+
 	sketch._refreshTable = () => {
 		interestingPoints.ShowMidArcs.points = [];
 		interestingPoints.ShowEndArcs.points = [];
@@ -188,8 +202,8 @@ const s = (sketch) => {
 		circles.forEach(c => {
 			hhCircles.push({radius: c.r, x: c.x, y: c.y, id: c.index});
 		});
-		let hhResult = circleRegions.getIntersectionRegions(hhCircles);
-		hhResult.regions.forEach(a => {
+		this.hhResult = circleRegions.getIntersectionRegions(hhCircles);
+		this.hhResult.regions.forEach(a => {
 			if (a.isCircle) {
 				return;
 			}
@@ -207,7 +221,7 @@ const s = (sketch) => {
 			interestingPoints.ShowAvgRegions.points.push({x: arcMidX/contourLength, y: arcMidY/contourLength});
 		});
 		if (guiParams.LogRegions) {
-			console.log("Regions", hhResult);
+			console.log("Regions", this.hhResult);
 		}
 		sketch.loop();
 	}
