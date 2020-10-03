@@ -75,42 +75,44 @@ const s = (sketch) => {
 
 	sketch.draw = () => {
 		sketch.background(220);
-
+		let colorMultiplier = 50;
 		if (this.hhResult !== undefined && this.hhResult.regions !== undefined) {
 			this.hhResult.regions.forEach(region => {
-				if (region.radius !== undefined) {
+				if (region.isCircle) {
+					sketch.strokeWeight(3);
+					sketch.stroke("#f00");
+					sketch.fill(colorMultiplier);
 					sketch.ellipseMode(sketch.RADIUS);
 					sketch.circle(region.x, region.y, region.radius);
-				} else {
-					if (region.isContour) {
-						if (region.isInterior) {
-							sketch.stroke("#0f0");
-						} else {
-							sketch.stroke("#f00");
-						}
-						sketch.noFill();
-						sketch.strokeWeight(3);
-					} else {
-						let circleCount = 0;
-						this.hhResult.circles.forEach(circle => {
-							if (region.isInCircle(circle)) {
-								circleCount++;
-							}
-						});
-						sketch.fill(circleCount*30);
-						sketch.stroke(30);
-						sketch.strokeWeight(1);
-					}
-					const poly = circleRegions.renderPoly(region, 0.05);
-					sketch.beginShape();
-					poly.forEach(v => {
-						sketch.vertex(v.x, v.y);
-					})
-					sketch.endShape(sketch.CLOSE);
-
-					sketch.stroke(255);
-					sketch.noFill();
+					return;
 				}
+				if (region.isContour) {
+					sketch.noFill();
+					sketch.strokeWeight(3);
+					if (region.isInterior) {
+						sketch.stroke("#0f0");
+					} else {
+						sketch.stroke("#f00");
+					}
+				} else {
+					sketch.stroke(255);
+					sketch.strokeWeight(1);
+
+					let parentCount = 0;
+					this.hhResult.circles.forEach(circle => {
+						if (region.isInCircle(circle)) {
+							parentCount++;
+						}
+					});
+					sketch.fill(parentCount * colorMultiplier);
+				}
+
+				const poly = circleRegions.renderPoly(region, 0.05);
+				sketch.beginShape();
+				poly.forEach(v => {
+					sketch.vertex(v.x, v.y);
+				})
+				sketch.endShape(sketch.CLOSE);
 			})
 		}
 
@@ -222,7 +224,7 @@ const s = (sketch) => {
 		const t0 = performance.now();
 		this.hhResult = circleRegions.getIntersectionRegions(hhCircles);
 		const t1 = performance.now();
-		console.log(`${t1-t0} ms for ${this.hhResult.circles.length} circles with ${this.hhResult.regions.length} regions and ${this.hhResult.vectors.length} points of intersection`);
+		//console.log(`${t1-t0} ms for ${this.hhResult.circles.length} circles with ${this.hhResult.regions.length} regions and ${this.hhResult.vectors.length} points of intersection`);
 
 		sketch.loop();
 	}
