@@ -75,7 +75,7 @@ const s = (sketch) => {
 
 	sketch.draw = () => {
 		sketch.background(220);
-		let colorMultiplier = 50;
+		let colorMultiplier = 40;
 		if (this.hhResult !== undefined && this.hhResult.regions !== undefined) {
 			this.hhResult.regions.forEach(region => {
 				if (region.isCircle) {
@@ -107,7 +107,7 @@ const s = (sketch) => {
 					sketch.fill(parentCount * colorMultiplier);
 				}
 
-				const poly = circleRegions.renderPoly(region, 0.05);
+				const poly = circleRegions.renderPoly(region, 0.1);
 				sketch.beginShape();
 				poly.forEach(v => {
 					sketch.vertex(v.x, v.y);
