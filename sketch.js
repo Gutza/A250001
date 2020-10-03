@@ -77,17 +77,39 @@ const s = (sketch) => {
 		sketch.background(220);
 
 		if (this.hhResult !== undefined && this.hhResult.regions !== undefined) {
-			this.hhResult.regions.forEach(r=>{
-				if (r.radius !== undefined) {
+			this.hhResult.regions.forEach(region => {
+				if (region.radius !== undefined) {
 					sketch.ellipseMode(sketch.RADIUS);
-					sketch.circle(r.x, r.y, r.radius);
+					sketch.circle(region.x, region.y, region.radius);
 				} else {
-					const poly = circleRegions.renderPoly(r, 0.1);
+					if (region.isContour) {
+						if (region.isInterior) {
+							sketch.stroke("#0f0");
+						} else {
+							sketch.stroke("#f00");
+						}
+						sketch.noFill();
+						sketch.strokeWeight(3);
+					} else {
+						let circleCount = 0;
+						this.hhResult.circles.forEach(circle => {
+							if (region.isInCircle(circle)) {
+								circleCount++;
+							}
+						});
+						sketch.fill(circleCount*30);
+						sketch.stroke(30);
+						sketch.strokeWeight(1);
+					}
+					const poly = circleRegions.renderPoly(region, 0.05);
 					sketch.beginShape();
 					poly.forEach(v => {
 						sketch.vertex(v.x, v.y);
 					})
 					sketch.endShape(sketch.CLOSE);
+
+					sketch.stroke(255);
+					sketch.noFill();
 				}
 			})
 		}
@@ -180,6 +202,8 @@ const s = (sketch) => {
 	this.delayHandle = null;
 
 	sketch.refreshTable = () => {
+		sketch._refreshTable();
+		return;
 		sketch.loop();
 		clearTimeout(this.delayHandle);
 		this.delayHandle = setTimeout(sketch._refreshTable, 5);
@@ -195,27 +219,11 @@ const s = (sketch) => {
 		circles.forEach(c => {
 			hhCircles.push({radius: c.r, x: c.x, y: c.y, id: c.index});
 		});
+		const t0 = performance.now();
 		this.hhResult = circleRegions.getIntersectionRegions(hhCircles);
-		this.hhResult.regions.forEach(a => {
-			if (a.isCircle) {
-				return;
-			}
-			let arcMidX = 0;
-			let arcMidY = 0;
-			let contourLength = a.perimeter;
-			
-			a.arcs.forEach(a => {
-				interestingPoints.ShowMidArcs.points.push({x: a.mx, y: a.my});
-				interestingPoints.ShowEndArcs.points.push({x: a.start.x, y: a.start.y});
-				arcMidX += a.mx * a.arcLength;
-				arcMidY += a.my * a.arcLength;
-			});
+		const t1 = performance.now();
+		console.log(`${t1-t0} ms for ${this.hhResult.circles.length} circles with ${this.hhResult.regions.length} regions and ${this.hhResult.vectors.length} points of intersection`);
 
-			interestingPoints.ShowAvgRegions.points.push({x: arcMidX/contourLength, y: arcMidY/contourLength});
-		});
-		if (guiParams.LogRegions) {
-			console.log("Regions", this.hhResult);
-		}
 		sketch.loop();
 	}
 }
