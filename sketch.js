@@ -9,7 +9,7 @@ let radicalLines = {};
 let radicalIntersections = [];
 
 let globalIndex = 0;
-class Circle {
+class SketchCircle {
 	constructor(p, x, y) {
 		this.p = p;
 		this.index = globalIndex++;
@@ -78,94 +78,16 @@ const s = (sketch) => {
 	sketch.draw = () => {
 		sketch.background(220);
 		let colorMultiplier = 40;
-		if (this.hhResult !== undefined && this.hhResult.regions !== undefined) {
-			sketch.strokeJoin(sketch.ROUND);
-			let strokeWidth = this.hhResult.regions.length * 2 - 1;
-			let strokeColor = guiParams.ColorShift;
-
-			if (guiParams.ColorDebug) {
-				sketch.noFill();
-				this.hhResult.regions.forEach(region => {
-					strokeColor = (strokeColor + guiParams.ColorShift) % 6;
-					sketch.strokeWeight(strokeWidth);
-					strokeWidth -= 2;
-					switch(strokeColor) {
-						case 0:
-							sketch.stroke("rgba(255,0,0,0.33)");
-							break;
-						case 1:
-							sketch.stroke("rgba(0,255,0,0.33)");
-							break;
-						case 2:
-							sketch.stroke("rgba(0,0,255,0.33)");
-							break;
-						case 3:
-							sketch.stroke("rgba(255,255,0,0.33)");
-							break;
-						case 4:
-							sketch.stroke("rgba(255,255,0,0.33)");
-							break;
-						case 5:
-							sketch.stroke("rgba(255,0,255,0.33)");
-							break;
-					}
-					if (strokeWidth == -1) {
-						sketch.stroke(0);
-					}
-					if (region.isCircle) {
-						sketch.ellipseMode(sketch.RADIUS);
-						sketch.circle(region.x, region.y, region.radius);
-						return;
-					}
-
-					const poly = circleRegions.renderPoly(region, 0.1);
-					sketch.beginShape();
-					poly.forEach(v => {
-						sketch.vertex(v.x, v.y);
-					})
-					sketch.endShape(sketch.CLOSE);
-				})
-			} else {
-				this.hhResult.regions.forEach(region => {
-					if (region.isCircle) {
-						sketch.strokeWeight(3);
-						sketch.stroke("#f00");
-						sketch.fill(colorMultiplier);
-						sketch.ellipseMode(sketch.RADIUS);
-						sketch.circle(region.x, region.y, region.radius);
-						return;
-					}
-					if (region.isContour) {
-						sketch.noFill();
-						sketch.strokeWeight(3);
-						if (region.isInteriorContour) {
-							sketch.stroke("#0a0");
-						} else {
-							sketch.stroke("#f00");
-						}
-					} else {
-						sketch.stroke(255);
-						sketch.strokeWeight(1);
-	
-						let parentCount = 0;
-						this.hhResult.circles.forEach(circle => {
-							if (region.isInCircle(circle)) {
-								parentCount++;
-							}
-						});
-						sketch.fill(parentCount * colorMultiplier);
-					}
-	
-					const poly = circleRegions.renderPoly(region, 0.1);
-					sketch.beginShape();
-					poly.forEach(v => {
-						sketch.vertex(v.x, v.y);
-					})
-					sketch.endShape(sketch.CLOSE);
-				})
-			}
+		if (this.graph === undefined) {
+			return;
 		}
-
+		sketch.noFill();
+		sketch.ellipseMode(sketch.RADIUS);
+		this.graph.regions.forEach(region => {
+			region.arcs.forEach(arc => {
+				sketch.arc(arc.circle.center.x, arc.circle.center.y, arc.circle.radius, arc.circle.radius, arc.startAngle, arc.endAngle, arc.startAngle<arc.endAngle);
+			})
+		})
 		sketch.noLoop();
 	}
 
@@ -237,7 +159,7 @@ const s = (sketch) => {
 				c.oy = c.y;
 			});
 		} else {
-			circles.push(new Circle(sketch, sketch.mouseX, sketch.mouseY));
+			circles.push(new SketchCircle(sketch, sketch.mouseX, sketch.mouseY));
 		}
 
 		sketch.refreshTable();
@@ -261,21 +183,14 @@ const s = (sketch) => {
 		this.delayHandle = setTimeout(sketch._refreshTable, 5);
 	}
 	
-	this.hhResult = {};
-
 	sketch._refreshTable = () => {
 		interestingPoints.ShowMidArcs.points = [];
 		interestingPoints.ShowEndArcs.points = [];
 		interestingPoints.ShowAvgRegions.points = [];
-		let hhCircles = [];
+		this.graph = new circleRegions.Graph();
 		circles.forEach(c => {
-			hhCircles.push({radius: c.r, x: c.x, y: c.y, id: c.index});
+			this.graph.addCircle(new circleRegions.Circle({x:c.x, y:c.y}, c.r));
 		});
-		const t0 = performance.now();
-		this.hhResult = circleRegions.getIntersectionRegions(hhCircles);
-		const t1 = performance.now();
-		//console.log(`${t1-t0} ms for ${this.hhResult.circles.length} circles with ${this.hhResult.regions.length} regions and ${this.hhResult.vectors.length} points of intersection`);
-
 		sketch.loop();
 	}
 }
