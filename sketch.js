@@ -58,6 +58,8 @@ const s = (sketch) => {
 		ShowEndArcs: true,
 		ShowAvgRegions: true,
 		LogRegions: false,
+		ColorDebug: false,
+		ColorShift: 1,
 	}
 	var gui;
 
@@ -77,43 +79,91 @@ const s = (sketch) => {
 		sketch.background(220);
 		let colorMultiplier = 40;
 		if (this.hhResult !== undefined && this.hhResult.regions !== undefined) {
-			this.hhResult.regions.forEach(region => {
-				if (region.isCircle) {
-					sketch.strokeWeight(3);
-					sketch.stroke("#f00");
-					sketch.fill(colorMultiplier);
-					sketch.ellipseMode(sketch.RADIUS);
-					sketch.circle(region.x, region.y, region.radius);
-					return;
-				}
-				if (region.isContour) {
-					sketch.noFill();
-					sketch.strokeWeight(3);
-					if (region.isInterior) {
-						sketch.stroke("#0f0");
-					} else {
-						sketch.stroke("#f00");
+			sketch.strokeJoin(sketch.ROUND);
+			let strokeWidth = this.hhResult.regions.length * 2 - 1;
+			let strokeColor = guiParams.ColorShift;
+
+			if (guiParams.ColorDebug) {
+				sketch.noFill();
+				this.hhResult.regions.forEach(region => {
+					strokeColor = (strokeColor + guiParams.ColorShift) % 6;
+					sketch.strokeWeight(strokeWidth);
+					strokeWidth -= 2;
+					switch(strokeColor) {
+						case 0:
+							sketch.stroke("rgba(255,0,0,0.33)");
+							break;
+						case 1:
+							sketch.stroke("rgba(0,255,0,0.33)");
+							break;
+						case 2:
+							sketch.stroke("rgba(0,0,255,0.33)");
+							break;
+						case 3:
+							sketch.stroke("rgba(255,255,0,0.33)");
+							break;
+						case 4:
+							sketch.stroke("rgba(255,255,0,0.33)");
+							break;
+						case 5:
+							sketch.stroke("rgba(255,0,255,0.33)");
+							break;
 					}
-				} else {
-					sketch.stroke(255);
-					sketch.strokeWeight(1);
+					if (strokeWidth == -1) {
+						sketch.stroke(0);
+					}
+					if (region.isCircle) {
+						sketch.ellipseMode(sketch.RADIUS);
+						sketch.circle(region.x, region.y, region.radius);
+						return;
+					}
 
-					let parentCount = 0;
-					this.hhResult.circles.forEach(circle => {
-						if (region.isInCircle(circle)) {
-							parentCount++;
-						}
-					});
-					sketch.fill(parentCount * colorMultiplier);
-				}
-
-				const poly = circleRegions.renderPoly(region, 0.1);
-				sketch.beginShape();
-				poly.forEach(v => {
-					sketch.vertex(v.x, v.y);
+					const poly = circleRegions.renderPoly(region, 0.1);
+					sketch.beginShape();
+					poly.forEach(v => {
+						sketch.vertex(v.x, v.y);
+					})
+					sketch.endShape(sketch.CLOSE);
 				})
-				sketch.endShape(sketch.CLOSE);
-			})
+			} else {
+				this.hhResult.regions.forEach(region => {
+					if (region.isCircle) {
+						sketch.strokeWeight(3);
+						sketch.stroke("#f00");
+						sketch.fill(colorMultiplier);
+						sketch.ellipseMode(sketch.RADIUS);
+						sketch.circle(region.x, region.y, region.radius);
+						return;
+					}
+					if (region.isContour) {
+						sketch.noFill();
+						sketch.strokeWeight(3);
+						if (region.isInteriorContour) {
+							sketch.stroke("#0a0");
+						} else {
+							sketch.stroke("#f00");
+						}
+					} else {
+						sketch.stroke(255);
+						sketch.strokeWeight(1);
+	
+						let parentCount = 0;
+						this.hhResult.circles.forEach(circle => {
+							if (region.isInCircle(circle)) {
+								parentCount++;
+							}
+						});
+						sketch.fill(parentCount * colorMultiplier);
+					}
+	
+					const poly = circleRegions.renderPoly(region, 0.1);
+					sketch.beginShape();
+					poly.forEach(v => {
+						sketch.vertex(v.x, v.y);
+					})
+					sketch.endShape(sketch.CLOSE);
+				})
+			}
 		}
 
 		sketch.noLoop();
